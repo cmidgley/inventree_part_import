@@ -22,6 +22,7 @@ class ApiPart:
     parameters: dict[str, str]
     price_breaks: dict[int, float]
     currency: str
+    barcode: str | None = None
 
     def finalize(self):
         if not self.finalize_hook():
