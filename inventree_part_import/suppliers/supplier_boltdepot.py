@@ -174,7 +174,7 @@ class BoltDepot(Supplier):
         return ApiPart(
             description=description,
             image_url=image_url,
-            datasheet_url=PRODUCT_URL.format(part_id),
+            datasheet_url="",
             supplier_link=PRODUCT_URL.format(part_id),
             SKU=part_id,
             manufacturer="BoltDepot",
