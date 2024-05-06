@@ -14,8 +14,10 @@ from .base import Supplier, ApiPart
 
 from .scrape import scrape
 
-API_BASE_URL = "https://boltdepot.com/"
+DOMAIN = "boltdepot.com"
+API_BASE_URL = f"https://{DOMAIN}/"
 PRODUCT_URL = f"{API_BASE_URL}Product-Details?product={{}}"
+BARCODE_URL = f"http://{DOMAIN}/Product-Details.aspx?product={{}}"
 
 class BoltDepot(Supplier):
     """
@@ -184,6 +186,7 @@ class BoltDepot(Supplier):
             parameters=parameters,
             price_breaks=price_breaks,
             currency="USD",
+            barcode=BARCODE_URL.format(part_id)
         )
 
     def _get_description(self, content_main: Tag) -> str:
