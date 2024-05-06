@@ -51,6 +51,7 @@ def get_part(inventree_api: InvenTreeAPI, name):
 
 def get_category(inventree_api: InvenTreeAPI, category_path):
     name = category_path.split("/")[-1]
+    category_path = re.sub(r"\s*\/\s*", "/", category_path)
     for category in PartCategory.list(inventree_api, search=name):
         if category.pathstring == category_path:
             return category
