@@ -163,6 +163,14 @@ def upload_datasheet(part: Part, datasheet_url: str):
     except HTTPError as e:
         warning(f"failed to upload datasheet with: {e.args[0]['body']}")
 
+def set_barcode(part: Part, barcode: str | None):
+    if part.barcode_hash or not barcode:
+        return
+    try:
+        part.assignBarcode(barcode)
+    except HTTPError as e:
+        warning(f"failed to assign barcode with: {e.args[0]['body']}")
+
 def url2filename(url):
     parsed = urlparse(url)
     if "." not in parsed.path:
