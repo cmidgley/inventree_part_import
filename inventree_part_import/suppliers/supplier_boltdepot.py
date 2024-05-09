@@ -17,7 +17,9 @@ from .scrape import scrape
 DOMAIN = "boltdepot.com"
 API_BASE_URL = f"https://{DOMAIN}/"
 PRODUCT_URL = f"{API_BASE_URL}Product-Details?product={{}}"
-BARCODE_URL = f"http://{DOMAIN}/Product-Details.aspx?product={{}}"
+# some BoltDepot parts use `http:` and other `https:`.  The assumption is that the `http` version is
+# older, use the `https  version, since we can not have more than one barcode linked to the same part.
+BARCODE_URL = f"https://{DOMAIN}/Product-Details.aspx?product={{}}"
 
 class BoltDepot(Supplier):
     """
