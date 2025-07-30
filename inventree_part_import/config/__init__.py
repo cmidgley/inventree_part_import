@@ -115,7 +115,7 @@ VALID_CONFIG_VARS = {
     "datasheets",
     "interactive_category_matches",
     "interactive_parameter_matches",
-    "ipn_template",
+    "ipn_format",
     "part_selection_format",
     "auto_detect_columns",
     *DEFAULT_CONFIG_VARS,
@@ -268,12 +268,23 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
         suppliers_out = {}
         try:
             with update_config_file(SUPPLIERS_CONFIG, allow_empty=True) as suppliers_config_data:
+                previous_supplier = None
                 for id, supplier_config in suppliers_config_data.items():
                     if supplier_config is None:
-                        continue
+                        supplier_config = {}
                     if not (supplier := suppliers.get(id)):
-                        warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
+                        if setup:
+                            warning(f"skipping unknown supplier '{id}' in '{SUPPLIERS_CONFIG}'")
                         continue
+                    if setup and previous_supplier:
+                        if previous_supplier[1].SUPPORT_LEVEL > supplier.SUPPORT_LEVEL:
+                            warning(
+                                f"supplier '{previous_supplier[0]}' (support level "
+                                f"{previous_supplier[1].SUPPORT_LEVEL.name}) is used ahead of "
+                                f"supplier '{id}' (support level {supplier.SUPPORT_LEVEL.name})"
+                            )
+                            hint(f"you might want to reorder them in '{SUPPLIERS_CONFIG}'")
+                    previous_supplier = (id, supplier)
                     new_supplier_config = update_supplier_config(supplier, supplier_config)
                     if new_supplier_config is not None:
                         suppliers_config_data[id] = new_supplier_config
@@ -291,23 +302,24 @@ def load_suppliers_config(suppliers: dict[str, Supplier], setup=True):
     new_configuration_hint()
 
     suppliers_config_data = {}
-    prompt("select the suppliers you want to setup (SPACEBAR to toggle, ENTER to confirm)")
-    selection = select_multiple(
-        [supplier.name for supplier in suppliers.values()],
-        ticked_indices=list(range(len(suppliers))),
-        deselected_unticked_prefix="  [ ] ",
-        deselected_ticked_prefix="  [x] ",
-        selected_unticked_prefix="> [ ] ",
-        selected_ticked_prefix="> [x] ",
-    )
-
     suppliers_out = {}
-    supplier_ids = list(suppliers.keys())
-    for id in (supplier_ids[index] for index in selection):
-        new_supplier_config = update_supplier_config(suppliers[id], {})
-        if new_supplier_config is not None:
-            suppliers_config_data[id] = new_supplier_config
-            suppliers_out[id] = suppliers[id]
+    if suppliers:
+        prompt("select the suppliers you want to setup (SPACEBAR to toggle, ENTER to confirm)")
+        selection = select_multiple(
+            [supplier.name for supplier in suppliers.values()],
+            ticked_indices=list(range(len(suppliers))),
+            deselected_unticked_prefix="  [ ] ",
+            deselected_ticked_prefix="  [x] ",
+            selected_unticked_prefix="> [ ] ",
+            selected_ticked_prefix="> [x] ",
+        )
+
+        supplier_ids = list(suppliers.keys())
+        for id in (supplier_ids[index] for index in selection):
+            new_supplier_config = update_supplier_config(suppliers[id], {})
+            if new_supplier_config is not None:
+                suppliers_config_data[id] = new_supplier_config
+                suppliers_out[id] = suppliers[id]
 
     yaml_data = yaml_dump(suppliers_config_data, sort_keys=False)
     suppliers_config.write_text(yaml_data, encoding="utf-8")
