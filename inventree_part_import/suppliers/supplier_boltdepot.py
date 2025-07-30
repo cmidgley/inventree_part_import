@@ -12,8 +12,6 @@ from bs4.element import Tag
 from ..error_helper import warning, info
 from .base import ScrapeSupplier, ApiPart
 
-from .scrape import scrape
-
 DOMAIN = "boltdepot.com"
 API_BASE_URL = f"https://{DOMAIN}/"
 PRODUCT_URL = f"{API_BASE_URL}Product-Details?product={{}}"
