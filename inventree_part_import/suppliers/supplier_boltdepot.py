@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from ..error_helper import warning, info
-from .base import Supplier, ApiPart
+from .base import ScrapeSupplier, ApiPart
 
 from .scrape import scrape
 
@@ -21,7 +21,7 @@ PRODUCT_URL = f"{API_BASE_URL}Product-Details?product={{}}"
 # older, use the `https  version, since we can not have more than one barcode linked to the same part.
 BARCODE_URL = f"https://{DOMAIN}/Product-Details.aspx?product={{}}"
 
-class BoltDepot(Supplier):
+class BoltDepot(ScrapeSupplier):
     """
     BoleDepot supplier, implement using HTML scraping of product pages.
     """
@@ -51,7 +51,7 @@ class BoltDepot(Supplier):
         # load the product page for the specified search term
         for _ in range(3):
             scrape_url = PRODUCT_URL.format(search_term)
-            product_page_result = scrape(scrape_url)
+            product_page_result = self.scrape(scrape_url)
             if product_page_result:
                 break
         else:
