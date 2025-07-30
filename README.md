@@ -16,6 +16,14 @@ pipx install inventree-part-import
 *(`pip` should also work, but [`pipx`](https://github.com/pypa/pipx) is the new recommended way
 to install standalone applications)*
 
+### Arch Linux
+
+Latest version from PyPI is available on AUR as
+[python-inventree-part-import](https://aur.archlinux.org/packages/python-inventree-part-import).<br>
+Git master version is available as
+[python-inventree-part-import-git](https://aur.archlinux.org/packages/python-inventree-part-import-git).<br>
+(Thanks to [@randrej](https://github.com/randrej)!)
+
 ## Getting Started
 
 ### Initial Configuration
@@ -152,6 +160,8 @@ Additionally you can define the following meta attributes (starting with `_`):
 - `_parameters` has to be a list of parameter names (for parameters defined in
   [`parameters.yaml`](#parametersyaml)) this category uses<br>
   **note: parameters get inherited by sub categories**
+- `_omit_parameters` has to be a list of parameters names defined in parent categories that
+  get omitted from the category
 - `_structural` can be set to `true` to make the category structural
 
 Here's an example for a config with special attributes:

@@ -1,43 +1,45 @@
 import re
 
-from requests import Session
+from ..error_helper import warning
+from .base import REMOVE_HTML_TAGS, ApiPart, ScrapeSupplier, SupplierSupportLevel
 
-from ..config import get_config
-from ..error_helper import *
-from .base import ApiPart, Supplier
-from .scrape import REMOVE_HTML_TAGS, scrape
-
-API_BASE_URL = "https://wmsc.lcsc.com/wmsc/"
-CURRENCY_URL     = f"{API_BASE_URL}home/currency?currencyCode={{}}"
+API_BASE_URL = "https://wmsc.lcsc.com/ftps/wm/"
+CURRENCY_URL     = f"https://wmsc.lcsc.com/wmsc/home/currency?currencyCode={{}}"
 SEARCH_URL       = f"{API_BASE_URL}search/global?keyword={{}}"
 PRODUCT_INFO_URL = f"{API_BASE_URL}product/detail?productCode={{}}"
 
-class LCSC(Supplier):
-    def setup(self, currency, ignore_duplicates=True):
+class LCSC(ScrapeSupplier):
+    SUPPORT_LEVEL = SupplierSupportLevel.INOFFICIAL_API
+
+    def setup(self, currency, browser_cookies="", ignore_duplicates=True):
         if currency not in CURRENCY_MAP.values():
             return self.load_error(f"unsupported currency '{currency}'")
 
         self.currency = currency
         self.ignore_duplicates = ignore_duplicates
+
+        if browser_cookies:
+            self.cookies_from_browser(browser_cookies, "lcsc.com")
+
         return True
 
     def search(self, search_term):
         for _ in range(3):
-            search_result = scrape(SEARCH_URL.format(search_term), setup_hook=self.setup_hook)
+            search_result = self.scrape(SEARCH_URL.format(search_term))
             if search_result and (result := search_result.json().get("result")):
                 break
         else:
             warning("failed to search part at LCSC (internal API error)")
             return [], 0
 
-        if product_detail := result["tipProductDetailUrlVO"]:
+        if product_detail := result.get("tipProductDetailUrlVO"):
             url = PRODUCT_INFO_URL.format(product_detail["productCode"])
             for _ in range(3):
-                detail_request = scrape(url, setup_hook=self.setup_hook)
+                detail_request = self.scrape(url)
                 if detail_request and (detail_result := detail_request.json().get("result")):
                     return [self.get_api_part(detail_result)], 1
             warning("failed to retrieve product data from LCSC (internal API error)")
-        elif products := result["productSearchResultVO"]:
+        elif products := result.get("productSearchResultVO"):
             filtered_matches = [
                 product for product in products["productList"]
                 if product["productModel"].lower().startswith(search_term.lower())
@@ -139,8 +141,8 @@ class LCSC(Supplier):
             currency=currency,
         )
 
-    def setup_hook(self, session: Session):
-        session.get(CURRENCY_URL.format(self.currency), timeout=get_config()["request_timeout"])
+    def setup_hook(self):
+        self.session.get(CURRENCY_URL.format(self.currency), timeout=self.request_timeout)
 
 CLEANUP_URL_ID_REGEX = re.compile(r"[^\w\d\.]")
 def cleanup_url_id(url):
@@ -149,17 +151,8 @@ def cleanup_url_id(url):
     return url
 
 CURRENCY_MAP = {
-    "US$": "USD",
-    "A$":  "AUD",
-    "C$":  "CAD",
+    "$":   "USD",
     "€":   "EUR",
-    "£":   "GBP",
+    "¥":   "CNY",
     "HK$": "HKD",
-    "JP¥": "JPY",
-    "RM":  "MYR",
-    "S$":  "SGD",
-    "₽":   "RUB",
-    "kr":  "SEK",
-    "kr.": "DKK",
-    "₹":   "INR",
 }

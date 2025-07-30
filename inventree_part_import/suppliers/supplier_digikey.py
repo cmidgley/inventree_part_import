@@ -7,12 +7,14 @@ from platformdirs import user_cache_path
 from .. import __package__ as parent_package
 from ..localization import get_country, get_language
 from ..retries import retry_timeouts
-from .base import ApiPart, Supplier
+from .base import ApiPart, Supplier, SupplierSupportLevel
 
 DIGIKEY_CACHE = user_cache_path(parent_package, ensure_exists=True) / "digikey"
 DIGIKEY_CACHE.mkdir(parents=True, exist_ok=True)
 
 class DigiKey(Supplier):
+    SUPPORT_LEVEL = SupplierSupportLevel.OFFICIAL_API
+
     def setup(self, client_id, client_secret, currency, language, location):
         os.environ["DIGIKEY_CLIENT_ID"] = client_id
         os.environ["DIGIKEY_CLIENT_SECRET"] = client_secret
@@ -34,6 +36,17 @@ class DigiKey(Supplier):
         return True
 
     def search(self, search_term):
+        for retry in retry_timeouts():
+            with retry:
+                digikey_part = digikey.product_details(
+                    search_term,
+                    x_digikey_locale_currency=self.currency,
+                    x_digikey_locale_site=self.location,
+                    x_digikey_locale_language=self.language,
+                )
+        if digikey_part and search_term == digikey_part.digi_key_part_number:
+            return [self.get_api_part(digikey_part)], 1
+
         for retry in retry_timeouts():
             with retry:
                 results = digikey.keyword_search(
