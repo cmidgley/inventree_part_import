@@ -6,7 +6,7 @@ from pathlib import Path
 from ..config import SUPPLIERS_CONFIG, get_config, load_suppliers_config, update_config_file
 from ..error_helper import *
 from ..inventree_helpers import Company
-from .base import Supplier
+from .base import ScrapeSupplier, Supplier
 
 _SUPPLIERS = None
 def search(search_term, supplier_id: str = None, only_supplier=False):
@@ -45,7 +45,9 @@ def setup_supplier_companies(inventree_api):
     global_config = get_config()
     with update_config_file(SUPPLIERS_CONFIG) as suppliers_config:
         for id, supplier_object in _SUPPLIER_OBJECTS.items():
-            supplier_config = suppliers_config[id]
+            supplier_config = suppliers_config.get(id)
+            if supplier_config is None:
+                supplier_config = suppliers_config[id] = {}
             api_company = Company(
                 name=supplier_object.name,
                 currency=supplier_config.get("currency", global_config["currency"]),
@@ -78,15 +80,24 @@ def get_suppliers(reload=False, setup=True) -> tuple[dict, dict]:
 
         supplier_classes = [
             cls for cls in vars(module).values()
-            if isclass(cls) and cls is not Supplier and issubclass(cls, Supplier)
+            if isclass(cls) and cls not in (Supplier, ScrapeSupplier) and issubclass(cls, Supplier)
         ]
         if len(supplier_classes) != 1:
             suffix = "multiple Supplier classes" if supplier_classes else "no Supplier class"
             error(f"failed to load supplier module '{module_name}' ({suffix} defined)")
             continue
 
+        if supplier_classes[0].SUPPORT_LEVEL is None:
+            error(f"failed to load supplier module '{module_name}' (undefined SUPPORT_LEVEL)")
+            continue
+
         id = module_name.split("supplier_", 1)[-1]
         _AVAILABLE_SUPPLIER_OBJECTS[id] = supplier_classes[0]()
+
+    _AVAILABLE_SUPPLIER_OBJECTS = dict(sorted(
+        _AVAILABLE_SUPPLIER_OBJECTS.items(),
+        key=lambda supplier_item: (supplier_item[1].SUPPORT_LEVEL, supplier_item[1].name),
+    ))
 
     _SUPPLIER_OBJECTS = load_suppliers_config(_AVAILABLE_SUPPLIER_OBJECTS, setup=setup)
 
