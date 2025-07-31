@@ -29,7 +29,7 @@ class ImportResult(Enum):
     def __or__(self, other):
         return self if self.value < other.value else other
 
-IPNSetting = Enum("false", "true", "overwrite")
+IPNSetting = Enum('IPNSetting', ["false", "true", "overwrite"])
 
 class PartImporter:
     def __init__(self, inventree_api, interactive=False, verbose=False, ipn=IPNSetting.true):
