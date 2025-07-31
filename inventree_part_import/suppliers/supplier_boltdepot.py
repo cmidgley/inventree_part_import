@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from ..error_helper import warning, info
-from .base import ScrapeSupplier, ApiPart
+from .base import ScrapeSupplier, ApiPart, SupplierSupportLevel
 
 DOMAIN = "boltdepot.com"
 API_BASE_URL = f"https://{DOMAIN}/"
@@ -23,6 +23,7 @@ class BoltDepot(ScrapeSupplier):
     """
     BoleDepot supplier, implement using HTML scraping of product pages.
     """
+    SUPPORT_LEVEL = SupplierSupportLevel.SCRAPING
 
     def setup(self):
         """
