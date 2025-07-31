@@ -151,7 +151,7 @@ class PartImporter:
         return [*api_parts, None][index]
 
     def import_part_ipn(self, api_part, supplier):
-        # only add IPN if --ipn ALWAYS, or --ipn NEW and part doesn't yet have an IPN
+        # only add IPN if --ipn overwrite, or --ipn true and part doesn't yet have an IPN
         if self.ipn == IPNSetting.false:
             return True
         if self.ipn == IPNSetting.true and getattr(self.existing_part, "IPN", None):
@@ -176,6 +176,10 @@ class PartImporter:
         else:
             return True
 
+        # skip IPN formatting if no format is defined
+        if ipn_format == None:
+            return True
+
         # set up jinja2 context
         context = {
             "part_id": self.existing_part.pk,
@@ -189,12 +193,12 @@ class PartImporter:
             },
         }
 
-        # render the IPN template
+        # render the IPN format
         try:
             template = Template(ipn_format)
             ipn = template.render(context)
         except Exception as e:
-            error(f"failed to render IPN template '{ipn_format}' with: {e}")
+            error(f"failed to render IPN format '{ipn_format}' with: {e}")
             return False
 
         # if we got a resulting ipn, other than just separators, update the part
