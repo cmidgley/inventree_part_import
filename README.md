@@ -101,7 +101,7 @@ The following parameters have to be set:
   (set to null to disable)
 - `interactive_category_matches`: the maximum number of categories to display in interactive mode
 - `interactive_parameter_matches`: the maximum number of parameters to display in interactive mode
-- `ipn_format`: Optional default template for defining IPN part numbers.  See [IPN Templates](ipn_formats).
+- `ipn_format`: Optional default template for defining IPN part numbers.  See [IPN Formats](ipn_formats).
 - `part_selection_format`: standard python format str used to format each line of the
   interactive part selection menu (any fields from the `ApiPart` dataclass can be used,
   defaults to: `"{MPN} | {manufacturer} | {SKU} | {supplier_link}"`)
@@ -207,15 +207,15 @@ Input Voltage:
     _unit: V # experimental, this can lead to import problems
 ```
 
-### IPN Templates
+### IPN Formats
 
-You can optionally use IPN templates to define a custom IPN name on parts.  If you do not configure
-any templates, the IPN value is not used.  When templates are defined, which are standard Jinja2
-templates, the template result along with the CLI option `--ipn never|new|always`, are used to
-define the IPN value.  You can have a single default template for all imports, or customize the
-template per category in the hierarchy.
+You can optionally use IPN formats to define a custom IPN name on parts.  If you do not configure
+any foramts, the IPN value is not used.  When formats are defined, which are standard Jinja2
+templates, the foramt result along with the CLI option `--ipn false|true|overwrite`, are used to
+define the IPN value.  You can have a single default format for all imports, or customize the
+format per category in the hierarchy.
 
-Templates have several context variables available:
+Formats have several context variables available:
 
 - `category`: the category name of the part
 - `manufacturer`: the name of the part manufacturer
@@ -236,20 +236,20 @@ Some examples:
   > option on several parts which will show the template results without updating the database.
 
   > A missing value for a context variable, such as a parameter that doesn't exist, will result in an empty value.
-  > Template values are filtered to remove all leading, trailing, and duplicate common
+  > Format values are filtered to remove all leading, trailing, and duplicate common
   > separator values (`-`, `_`, and spaces), to avoid names like `RES---322` when parameter values are
   > not matched.
 
 The first supplier that finds a matching part will be used to define the context variables for the
-template (for example, the parameters from the first successful supplier search).  Use the `-s <supplier>` option to always search a specific supplier first.
+format (for example, the parameters from the first successful supplier search).  Use the `-s <supplier>` option to always search a specific supplier first.
 
-You optionally specify category-specific templates in
-`(categories.yaml)[categoriesyaml]` using `_ipn_format`.  For example, `Resistor` might have
+You optionally specify category-specific formats in
+[`categories.yaml`](#categoriesyaml) using `_ipn_format`.  For example, `Resistor` might have
 `RES-{{ parameters.Resistance }}` whereas `Capacitor` might use `CAP-{{ parameters.Capacitance }}`.
-Templates are searched in hierarchical order, starting with the closest category and working up the
-tree to the top level.   If no category template is found, the default template
-in `(config.yaml)[configyaml]` under `ipn_format` is used.  If no template is found, the IPN number will not be
-added.  Use the `--ipn never|new|always` CLI option for runtime control, where `new`
+Formats are searched in hierarchical order, starting with the closest category and working up the
+tree to the top level.   If no category format is found, the default format
+in [`config.yaml`](#configyaml) under `ipn_format` is used.  If no format is found, the IPN number will not be
+added.  Use the `--ipn false|true|overwrite` CLI option for runtime control, where `true`
 is the default behavior (only add an IPN if the part does not already have one)
 
 ### Pre Creation Hooks (`hooks.py`)
